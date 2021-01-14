@@ -59,7 +59,7 @@ abstract class CActiveRecord extends CModel
 	private $_attributes=array();				// attribute name => attribute value
 	private $_related=array();					// attribute name => related objects
 	private $_c;								// query criteria (used by finder only)
-	private $_pk;								// old primary key value
+    protected $_pk;								// old primary key value
 	private $_alias='t';						// the table alias being used for query
 
 
@@ -1113,17 +1113,17 @@ abstract class CActiveRecord extends CModel
 	 * Updates the row represented by this active record.
 	 * All loaded attributes will be saved to the database.
 	 * Note, validation is not performed in this method. You may call {@link validate} to perform the validation.
-	 * @param array $attributes list of attributes that need to be saved. Defaults to null,
+	 * @param array|bool $attributes list of attributes that need to be saved. Defaults to null,
 	 * meaning all attributes that are loaded from DB will be saved.
 	 * @return boolean whether the update is successful
 	 * @throws CDbException if the record is new
 	 */
 	public function update($attributes=null)
 	{
-		if($this->getIsNewRecord())
-			throw new CDbException(Yii::t('yii','The active record cannot be updated because it is new.'));
-		if($this->beforeSave())
-		{
+//		if($this->getIsNewRecord())
+//			throw new CDbException(Yii::t('yii','The active record cannot be updated because it is new.'));
+//		if($this->beforeSave())
+//		{
 			Yii::trace(get_class($this).'.update()','system.db.ar.CActiveRecord');
 			if($this->_pk===null)
 				$this->_pk=$this->getPrimaryKey();
@@ -1131,9 +1131,9 @@ abstract class CActiveRecord extends CModel
 			$this->_pk=$this->getPrimaryKey();
 			$this->afterSave();
 			return true;
-		}
-		else
-			return false;
+//		}
+//		else
+//			return false;
 	}
 
 	/**

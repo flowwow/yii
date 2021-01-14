@@ -174,6 +174,12 @@ class CDbCommand extends CComponent
 		else
 			$this->_text=$value;
 		$this->cancel();
+        //Убираем переводы строк и чистим пробелы
+        $this->_text = trim($this->_text);
+        if (strpos($this->_text, 'SELECT') === 0) {
+            $this->_text = str_replace(PHP_EOL, ' ', $this->_text);
+            $this->_text = preg_replace('|[\s]+|s', ' ', $this->_text);
+        }
 		return $this;
 	}
 
@@ -324,7 +330,7 @@ class CDbCommand extends CComponent
 		}
 		else
 			$par='';
-		Yii::trace('Executing SQL: '.$this->getText().$par,'system.db.CDbCommand');
+        Yii::trace('Executing SQL: ' . $this->_connection->connectionType.'|' . $this->getText() . $par, 'system.db.CDbCommand');
 		try
 		{
 			if($this->_connection->enableProfiling)
@@ -481,8 +487,7 @@ class CDbCommand extends CComponent
 		else
 			$par='';
 
-		Yii::trace('Querying SQL: '.$this->getText().$par,'system.db.CDbCommand');
-
+        Yii::trace('Querying SQL: ' . $this->_connection->connectionType.'|'. $this->getText() . $par, 'system.db.CDbCommand');
 		if($this->_connection->queryCachingCount>0 && $method!==''
 				&& $this->_connection->queryCachingDuration>0
 				&& $this->_connection->queryCacheID!==false

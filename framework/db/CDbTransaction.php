@@ -81,6 +81,7 @@ class CDbTransaction extends CComponent
 			if($this->_connection->getPdoInstance()->inTransaction())
 				$this->_connection->getPdoInstance()->rollBack();
 			$this->_active=false;
+            hSlack::commandLogWithBacktrace('Откат транзакции', 5000, false, DEBUG_BACKTRACE_IGNORE_ARGS);
 		}
 		else
 			throw new CDbException(Yii::t('yii','CDbTransaction is inactive and cannot perform commit or roll back operations.'));

@@ -35,18 +35,18 @@ class CActiveFinder extends CComponent
 	private $_joinTree;
 	private $_builder;
 
-	/**
-	 * Constructor.
-	 * A join tree is built up based on the declared relationships between active record classes.
-	 * @param CActiveRecord $model the model that initiates the active finding process
-	 * @param mixed $with the relation names to be actively looked for
-	 */
-	public function __construct($model,$with)
-	{
-		$this->_builder=$model->getCommandBuilder();
-		$this->_joinTree=new CJoinElement($this,$model);
-		$this->buildJoinTree($this->_joinTree,$with);
-	}
+    /**
+     * Constructor.
+     * A join tree is built up based on the declared relationships between active record classes.
+     * @param FwActiveRecord $model the model that initiates the active finding process
+     * @param mixed $with the relation names to be actively looked for
+     */
+    public function __construct($model,$with, $needWrite = false)
+    {
+        $this->_builder=$model->getCommandBuilder($needWrite);
+        $this->_joinTree=new CJoinElement($this,$model);
+        $this->buildJoinTree($this->_joinTree,$with);
+    }
 
 	/**
 	 * Do not call this method. This method is used internally to perform the relational query

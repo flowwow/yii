@@ -508,7 +508,7 @@ class CClientScript extends CApplicationComponent
 		if($this->_baseUrl!==null)
 			return $this->_baseUrl;
 		else
-			return $this->_baseUrl=Yii::app()->getAssetManager()->publish(YII_PATH.'/web/js/source');
+			return $this->_baseUrl=Yii::app()->getAssetManager()->publish(YII_PATH.'/web/js/source',true);
 	}
 
 	/**

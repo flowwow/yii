@@ -69,11 +69,12 @@ class CDbTransaction extends CComponent
 			throw new CDbException(Yii::t('yii','CDbTransaction is inactive and cannot perform commit or roll back operations.'));
 	}
 
-	/**
-	 * Rolls back a transaction.
-	 * @throws CException if the transaction or the DB connection is not active.
-	 */
-	public function rollback()
+    /**
+     * Rolls back a transaction.
+     * @param bool $withReport
+     * @throws CException if the transaction or the DB connection is not active.
+     */
+	public function rollback(bool $withReport = true)
 	{
 		if($this->_active && $this->_connection->getActive())
 		{
@@ -81,7 +82,9 @@ class CDbTransaction extends CComponent
 			if($this->_connection->getPdoInstance()->inTransaction())
 				$this->_connection->getPdoInstance()->rollBack();
 			$this->_active=false;
-            hSlack::commandLogWithBacktrace('Откат транзакции', 5000, false, DEBUG_BACKTRACE_IGNORE_ARGS);
+            if ($withReport) {
+                hSlack::commandLogWithBacktrace('Откат транзакции', 5000, false, DEBUG_BACKTRACE_IGNORE_ARGS);
+            }
 		}
 		else
 			throw new CDbException(Yii::t('yii','CDbTransaction is inactive and cannot perform commit or roll back operations.'));

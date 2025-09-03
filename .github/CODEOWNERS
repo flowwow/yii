@@ -1,0 +1,7 @@
+# CODEOWNERS:  list of maintainers or knowledgeble persons who automatically
+# will be assigned as reviewer to PR touching specified path below.
+#
+# more details on file syntax:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
+
+* @alviden @flowwow/team_infr_backend

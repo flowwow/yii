@@ -358,8 +358,7 @@ class CDbCommand extends CComponent
 			Yii::log(Yii::t('yii','CDbCommand::execute() failed: {error}. The SQL statement executed was: {sql}.',
 				array('{error}'=>$message, '{sql}'=>$this->getText().$par)),CLogger::LEVEL_ERROR,'system.db.CDbCommand');
 
-			if(YII_DEBUG)
-				$message.='. The SQL statement executed was: '.$this->getText().$par;
+            $message.='. The SQL statement executed was: '.$this->getText().$par;
 
 			throw new CDbException(Yii::t('yii','CDbCommand failed to execute the SQL statement: {error}',
 				array('{error}'=>$message)),(int)$e->getCode(),$errorInfo);
@@ -542,8 +541,7 @@ class CDbCommand extends CComponent
 			Yii::log(Yii::t('yii','CDbCommand::{method}() failed: {error}. The SQL statement executed was: {sql}.',
 				array('{method}'=>$method, '{error}'=>$message, '{sql}'=>$this->getText().$par)),CLogger::LEVEL_ERROR,'system.db.CDbCommand');
 
-			if(YII_DEBUG)
-				$message.='. The SQL statement executed was: '.$this->getText().$par;
+            $message.='. The SQL statement executed was: '.$this->getText().$par;
 
 			throw new CDbException(Yii::t('yii','CDbCommand failed to execute the SQL statement: {error}',
 				array('{error}'=>$message)),(int)$e->getCode(),$errorInfo);

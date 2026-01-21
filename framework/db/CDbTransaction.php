@@ -61,13 +61,27 @@ class CDbTransaction extends CComponent
 		if($this->_active && $this->_connection->getActive())
 		{
 			Yii::trace('Committing transaction','system.db.CDbTransaction');
-			if($this->_connection->getPdoInstance()->inTransaction())
-				$this->_connection->getPdoInstance()->commit();
+			if($this->_connection->getPdoInstance()->inTransaction()) {
+                $this->_connection->getPdoInstance()->commit();
+                $event = new CModelEvent($this);
+                $this->onCommit($event);
+            }
 			$this->_active=false;
 		}
 		else
 			throw new CDbException(Yii::t('yii','CDbTransaction is inactive and cannot perform commit or roll back operations.'));
 	}
+
+    /**
+     * Событие коммита транзакции
+     * @param CModelEvent $event
+     * @return void
+     * @throws CException
+     */
+    public function onCommit($event)
+    {
+        $this->raiseEvent('onCommit', $event);
+    }
 
     /**
      * Rolls back a transaction.

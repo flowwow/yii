@@ -76,6 +76,9 @@ class CDbCommand extends CComponent
 	private $_query;
 	private $_fetchMode = array(PDO::FETCH_ASSOC);
 
+	/** @var int Минимальная длина sql запроса для сокращения в тексте ошибки  */
+	const MIN_SQL_LENGTH_FOR_SHORTEN = 50;
+
 	/**
 	 * Constructor.
 	 * @param CDbConnection $connection the database connection
@@ -355,10 +358,13 @@ class CDbCommand extends CComponent
 
 			$errorInfo=$e instanceof PDOException ? $e->errorInfo : null;
 			$message=$e->getMessage();
-			Yii::log(Yii::t('yii','CDbCommand::execute() failed: {error}. The SQL statement executed was: {sql}.',
-				array('{error}'=>$message, '{sql}'=>$this->getText().$par)),CLogger::LEVEL_ERROR,'system.db.CDbCommand');
 
-            $message.='. The SQL statement executed was: '.$this->getText().$par;
+			$sqlForError = $this->shortenMultipleInClauses($this->getText());
+
+			Yii::log(Yii::t('yii','CDbCommand::execute() failed: {error}. The SQL statement executed was: {sql}.',
+				array('{error}'=>$message, '{sql}'=>$sqlForError . $par)),CLogger::LEVEL_ERROR,'system.db.CDbCommand');
+
+			$message.='. The SQL statement executed was: ' . $sqlForError . $par;
 
 			throw new CDbException(Yii::t('yii','CDbCommand failed to execute the SQL statement: {error}',
 				array('{error}'=>$message)),(int)$e->getCode(),$errorInfo);
@@ -538,10 +544,13 @@ class CDbCommand extends CComponent
 
 			$errorInfo=$e instanceof PDOException ? $e->errorInfo : null;
 			$message=$e->getMessage();
-			Yii::log(Yii::t('yii','CDbCommand::{method}() failed: {error}. The SQL statement executed was: {sql}.',
-				array('{method}'=>$method, '{error}'=>$message, '{sql}'=>$this->getText().$par)),CLogger::LEVEL_ERROR,'system.db.CDbCommand');
 
-            $message.='. The SQL statement executed was: '.$this->getText().$par;
+			$sqlForError = $this->shortenMultipleInClauses($this->getText());
+
+			Yii::log(Yii::t('yii','CDbCommand::{method}() failed: {error}. The SQL statement executed was: {sql}.',
+				array('{method}'=>$method, '{error}'=>$message, '{sql}'=>$sqlForError . $par)),CLogger::LEVEL_ERROR,'system.db.CDbCommand');
+
+			$message.='. The SQL statement executed was: ' . $sqlForError . $par;
 
 			throw new CDbException(Yii::t('yii','CDbCommand failed to execute the SQL statement: {error}',
 				array('{error}'=>$message)),(int)$e->getCode(),$errorInfo);
@@ -1638,5 +1647,48 @@ class CDbCommand extends CComponent
 	public function dropPrimaryKey($name,$table)
 	{
 		return $this->setText($this->getConnection()->getSchema()->dropPrimaryKey($name,$table))->execute();
+	}
+
+	/**
+	 * Обрезает слишком длинные IN (...) конструкции в SQL запросах для удобства чтения логов (и что бы ограничения на размер сообщений в мессенджерах не обрезали весь текст репорта с запросом)
+	 *
+	 * @param string $message
+	 * @return string
+	 */
+	protected function shortenMultipleInClauses(string $message): string
+	{
+		$result  = $message;
+		$matches = [];
+
+		preg_match_all('/IN\s*\(([^)]+)\)/i', $message, $matches, PREG_OFFSET_CAPTURE);
+
+		if ($matches < 1) {
+			return $message;
+		}
+
+		$matches[0] = array_reverse($matches[0]);
+		$matches[1] = array_reverse($matches[1]);
+
+		foreach ($matches[0] as $number => $inString) {
+			if (strlen($matches[1][$number][0]) <= self::MIN_SQL_LENGTH_FOR_SHORTEN) {
+				continue;
+			}
+			$idList = array_map('trim', explode(',', $matches[1][$number][0]));
+			if (count($idList) < 13) {
+				continue;
+			}
+
+			$newIn = 'IN ('
+				. implode(',', array_slice($idList, 0, 5))
+				. ', ***, '
+				. implode(',', array_slice($idList, -5))
+				. ')['
+				. count($idList)
+				. '] ';
+
+			$result = substr($result, 0, $inString[1]) . $newIn . substr($result, $inString[1] + strlen($inString[0]));
+		}
+
+		return $result;
 	}
 }

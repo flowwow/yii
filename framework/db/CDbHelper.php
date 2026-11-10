@@ -21,7 +21,7 @@ class CDbHelper
      */
     public static function shortenForLogging(string $sql): string
     {
-        $sql = self::shortenMultipleInClauses($sql);
+        $sql = self::shortenLongListsInSql($sql);
 
         if (preg_match('/^\s*(?:INSERT|REPLACE)\b/i', $sql) === 1) {
             return strlen($sql) > self::MAX_LOG_SQL_LENGTH
@@ -67,33 +67,42 @@ REGEX;
     }
 
     /**
-     * Обрезает слишком длинные IN (...) конструкции в SQL запросах для удобства чтения логов (и что бы ограничения на размер сообщений в мессенджерах не обрезали весь текст репорта с запросом)
+     * Обрезает слишком длинные списки в SQL запросах для удобства чтения логов (и чтобы ограничения на размер сообщений в мессенджерах не обрезали весь текст репорта с запросом)
      *
      * @param string $message
      * @return string
      */
-    public static function shortenMultipleInClauses(string $message): string
+    public static function shortenLongListsInSql(string $message): string
     {
         $result  = $message;
         $matches = [];
 
-        if (preg_match_all('/IN\s*\(([^)]+)\)/i', $message, $matches, PREG_OFFSET_CAPTURE) === 0) {
+        $matchCount = preg_match_all('/\b(IN|FIELD|JSON_ARRAY|JSON_OBJECT|CONCAT|CONCAT_WS|COALESCE|GREATEST|LEAST)\s*\(([^)]+)\)/i', $message, $matches, PREG_OFFSET_CAPTURE);
+
+        if ($matchCount === 0 || $matchCount === false) {
             return $message;
         }
 
         $matches[0] = array_reverse($matches[0]);
         $matches[1] = array_reverse($matches[1]);
+        $matches[2] = array_reverse($matches[2]);
 
         foreach ($matches[0] as $number => $inString) {
-            if (strlen($matches[1][$number][0]) <= self::MIN_SQL_LENGTH_FOR_SHORTEN) {
+            if (strlen($matches[2][$number][0]) <= self::MIN_SQL_LENGTH_FOR_SHORTEN) {
                 continue;
             }
-            $idList = array_map('trim', explode(',', $matches[1][$number][0]));
+            $idList = array_map('trim', explode(',', $matches[2][$number][0]));
+            $clause = strtoupper($matches[1][$number][0]);
+            $prefix = $clause . '(';
+            if ($clause === 'FIELD' || $clause === 'CONCAT_WS') {
+                $prefix .= array_shift($idList) . ',';
+            }
+
             if (count($idList) < self::MIN_VALUES_FOR_SHORTEN) {
                 continue;
             }
 
-            $newIn = 'IN ('
+            $newIn = $prefix
                 . implode(',', array_slice($idList, 0, 5))
                 . ', ***, '
                 . implode(',', array_slice($idList, -5))
@@ -101,7 +110,7 @@ REGEX;
                 . count($idList)
                 . '] ';
 
-            $result = substr($result, 0, $inString[1]) . $newIn . substr($result, $inString[1] + mb_strlen($inString[0]));
+            $result = substr($result, 0, $inString[1]) . $newIn . substr($result, $inString[1] + strlen($inString[0]));
         }
 
         return $result;
